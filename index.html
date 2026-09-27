@@ -1,0 +1,2297 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영단어 퀴즈</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="app-icon.png">
+<link rel="icon" href="app-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="영단어 퀴즈">
+<meta name="theme-color" content="#4f46e5">
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --ink: #1c1e21;
+    --sub: #6b7280;
+    --accent: #4f46e5;
+    --accent-soft: #eef2ff;
+    --good: #16a34a;
+    --good-soft: #dcfce7;
+    --bad: #dc2626;
+    --bad-soft: #fee2e2;
+    --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-tap-highlight-color: transparent;
+  }
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+  @media (min-width: 480px) {
+    body { background: #e9eaf0; }
+    #app {
+      max-width: 760px;
+      min-height: auto;
+      max-height: 94vh;
+      overflow-y: auto;
+      margin: 3vh auto;
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.08);
+    }
+  }
+
+  /* ---------- Header ---------- */
+  .topbar {
+    padding: 14px 16px 10px;
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  .topbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .brand {
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: -0.3px;
+  }
+  .score-pill {
+    font-size: 13px;
+    font-weight: 700;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .progress-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+    transition: width .25s ease;
+  }
+  .progress-label {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--sub);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ---------- Setup screen ---------- */
+  .screen { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+  .hero {
+    text-align: center;
+    padding: 28px 8px 8px;
+  }
+  .hero-emoji { font-size: 44px; }
+  .hero h1 {
+    font-size: 21px;
+    margin: 10px 0 4px;
+    letter-spacing: -0.4px;
+  }
+  .hero p {
+    color: var(--sub);
+    font-size: 14px;
+    margin: 0;
+    line-height: 1.5;
+  }
+  .section-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--sub);
+    margin: 22px 4px 10px;
+  }
+  .mode-toggle-row { margin-top: 16px; }
+  .mode-toggle {
+    position: relative;
+    display: flex;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .mode-toggle-thumb {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    height: calc(100% - 8px);
+    background: var(--accent);
+    border-radius: 9px;
+    transition: transform .2s ease;
+  }
+  .mode-toggle-thumb.right { transform: translateX(100%); }
+  .mode-toggle-label {
+    position: relative;
+    flex: 1;
+    text-align: center;
+    padding: 9px 4px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--sub);
+    z-index: 1;
+    transition: color .2s ease;
+  }
+  .mode-toggle-label.active { color: #fff; }
+  .mode-toggle-hint {
+    font-size: 11px;
+    color: var(--sub);
+    margin: 6px 4px 0;
+  }
+  .chip-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .chip {
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    border-radius: 12px;
+    padding: 12px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: all .15s ease;
+  }
+  .chip small { color: var(--sub); font-weight: 500; font-size: 11px; }
+  .chip.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .chip.active small { color: var(--accent); opacity: .8; }
+  .section-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .range-page-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--sub);
+  }
+  .range-page-nav button {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .range-page-nav button:disabled {
+    opacity: .35;
+    cursor: default;
+  }
+  .range-page-label {
+    min-width: 28px;
+    text-align: center;
+  }
+  .allbtn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1.5px dashed var(--border);
+    background: transparent;
+    color: var(--sub);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .count-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 22px 4px 10px;
+  }
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 6px 10px;
+  }
+  .stepper button {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .stepper span { font-weight: 700; min-width: 24px; text-align: center; }
+  .stepper input {
+    width: 44px;
+    border: none;
+    background: transparent;
+    font-weight: 700;
+    font-size: 15px;
+    text-align: center;
+    color: var(--ink);
+    font-family: inherit;
+    -moz-appearance: textfield;
+  }
+  .stepper input::-webkit-outer-spin-button,
+  .stepper input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .stepper input:focus { outline: none; }
+
+  .setup-grid {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .setup-col {
+    display: flex;
+    flex-direction: column;
+  }
+  @media (min-width: 480px) {
+    .setup-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 8px 32px;
+      align-items: start;
+    }
+    .setup-col { height: 100%; }
+    .hero { padding-top: 4px; text-align: left; }
+    .hero-emoji { font-size: 34px; }
+    .quiz-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      grid-template-areas:
+        "meta options"
+        "feedback options";
+      gap: 10px 28px;
+      align-items: start;
+    }
+    .quiz-meta { grid-area: meta; padding-top: 8px; }
+    .quiz-options { grid-area: options; }
+    .quiz-feedback { grid-area: feedback; }
+    .q-word { font-size: 34px; }
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 28px;
+      align-items: start;
+    }
+    .review-list { max-height: 62vh; overflow-y: auto; padding-right: 4px; }
+  }
+
+  .start-btn {
+    margin-top: auto;
+    padding-top: 24px;
+  }
+  .primary-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 8px 20px -6px rgba(79,70,229,.55);
+  }
+  .primary-btn:disabled {
+    background: var(--border);
+    color: var(--sub);
+    box-shadow: none;
+  }
+  .secondary-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  /* ---------- Quiz screen ---------- */
+  .q-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 22px 18px;
+    box-shadow: 0 2px 14px rgba(0,0,0,.05);
+    margin-top: 6px;
+  }
+  .q-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 9px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+  .q-word {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    word-break: break-word;
+  }
+  .q-word-meaning {
+    font-size: 22px;
+    letter-spacing: -0.2px;
+    line-height: 1.35;
+  }
+  .q-sub {
+    font-size: 13px;
+    color: var(--sub);
+    margin-top: 4px;
+  }
+  .options {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .opt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 14px;
+    border-radius: 13px;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+    transition: all .12s ease;
+  }
+  .opt .num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--bg);
+    color: var(--sub);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .opt.selected { border-color: var(--accent); background: var(--accent-soft); }
+  .opt.correct { border-color: var(--good); background: var(--good-soft); }
+  .opt.correct .num { background: var(--good); color: #fff; }
+  .opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+  .opt.wrong .num { background: var(--bad); color: #fff; }
+  .opt.disabled { cursor: default; }
+  .opt-mark { margin-left: auto; font-weight: 800; font-size: 15px; }
+  .opt-text { display: flex; flex-direction: column; text-align: left; }
+  .opt-reveal { font-size: 11px; font-weight: 500; color: var(--sub); margin-top: 2px; }
+
+  .fav-quiz-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1.5px solid #fde68a;
+    background: #fffbeb;
+    color: #b45309;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    margin-bottom: 4px;
+  }
+  .fav-quiz-btn:disabled {
+    border-color: var(--border);
+    background: var(--card);
+    color: var(--sub);
+    cursor: default;
+  }
+  .q-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .fav-toggle {
+    border: none;
+    background: transparent;
+    font-size: 26px;
+    line-height: 1;
+    color: #d1a300;
+    cursor: pointer;
+    padding: 2px 6px;
+  }
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .home-btn {
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--sub);
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 8px;
+  }
+  .home-btn:active { background: var(--border); }
+  .fav-toggle.active { color: #f59e0b; }
+  .fav-toggle.small { font-size: 18px; padding: 0 2px; }
+  .review-item-head { display: flex; align-items: center; justify-content: space-between; }
+
+  .fav-io-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .fav-io-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .fav-io-row input[readonly] { color: var(--sub); background: var(--bg); }
+  .fav-io-row button {
+    flex-shrink: 0;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .fav-io-row button:disabled { color: var(--sub); background: var(--border); cursor: default; }
+  .fav-io-hint { font-size: 11px; color: var(--sub); margin: 4px 4px 0; line-height: 1.4; }
+
+  .custom-add-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .custom-add-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .custom-add-row button {
+    flex-shrink: 0;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .custom-list {
+    margin-top: 10px;
+    max-height: 160px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .custom-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: var(--bg);
+    border-radius: 9px;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  .custom-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .custom-item button {
+    flex-shrink: 0;
+    border: none;
+    background: var(--bad-soft);
+    color: var(--bad);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  /* ---------- Manage screen ---------- */
+  .manage-top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+  }
+  .manage-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+  }
+  .manage-header h2 {
+    font-size: 17px;
+    margin: 0;
+  }
+  .manage-close-btn {
+    border: none;
+    background: var(--bg);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    color: var(--sub);
+  }
+  .manage-cat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 16px 12px;
+    max-height: 240px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .manage-cat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 8px 10px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .manage-cat-row.dragging {
+    box-shadow: 0 6px 16px rgba(0,0,0,.18);
+    z-index: 5;
+    position: relative;
+  }
+  .manage-cat-row.active {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .manage-cat-main {
+    flex: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    background: none;
+    border: none;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+  }
+  .manage-cat-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .manage-cat-row.active .manage-cat-name { color: #fff; }
+  .manage-cat-count {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--sub);
+    flex-shrink: 0;
+  }
+  .manage-cat-row.active .manage-cat-count { color: rgba(255,255,255,.8); }
+  .manage-cat-handle {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    color: var(--sub);
+    font-size: 18px;
+    line-height: 1;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .manage-cat-row.active .manage-cat-handle { color: rgba(255,255,255,.8); }
+  .manage-cat-add-chip {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1.5px dashed var(--border);
+    background: transparent;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--sub);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .manage-body { padding: 0 16px 24px; }
+  .manage-cat-tools {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .manage-cat-tools button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .manage-cat-tools button.danger { color: var(--bad); border-color: var(--bad-soft); }
+  .manage-word-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .manage-word-main { flex: 1; min-width: 0; }
+  .manage-word-main b { font-size: 14px; }
+  .manage-word-main span {
+    display: block;
+    font-size: 12px;
+    color: var(--sub);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .manage-word-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .manage-word-actions button {
+    border: none;
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .manage-word-actions .edit-btn { background: var(--accent-soft); color: var(--accent); }
+  .manage-word-actions .del-btn { background: var(--bad-soft); color: var(--bad); }
+  .manage-edit-row {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .manage-edit-row .custom-add-row { margin-bottom: 8px; }
+  .manage-edit-row-btns { display: flex; gap: 8px; }
+  .manage-edit-row-btns button {
+    flex: 1;
+    padding: 9px;
+    border-radius: 9px;
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .manage-edit-row-btns .save-btn { background: var(--accent); color: #fff; }
+  .manage-edit-row-btns .cancel-btn { background: var(--bg); color: var(--sub); }
+  .manage-empty { text-align: center; color: var(--sub); font-size: 13px; padding: 30px 0; }
+
+  .feedback {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  .feedback.show { display: flex; }
+  .feedback.good { background: var(--good-soft); color: var(--good); }
+  .feedback.bad { background: var(--bad-soft); color: var(--bad); }
+
+  .nav-row {
+    margin-top: 18px;
+  }
+  .nav-row-split {
+    display: flex;
+    gap: 10px;
+  }
+  .nav-row-split .nav-prev-btn {
+    flex: 0 0 auto;
+    width: 40%;
+    margin-top: 0;
+  }
+  .nav-row-split .primary-btn {
+    flex: 1;
+    margin-top: 0;
+  }
+
+  /* ---------- Result screen ---------- */
+  .result-hero {
+    text-align: center;
+    padding: 20px 8px 6px;
+  }
+  .result-ring {
+    width: 128px; height: 128px;
+    margin: 6px auto 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: conic-gradient(var(--accent) calc(var(--pct) * 1%), var(--border) 0);
+  }
+  .result-ring-inner {
+    width: 104px; height: 104px;
+    border-radius: 50%;
+    background: var(--card);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .result-ring-inner b { font-size: 26px; }
+  .result-ring-inner span { font-size: 11px; color: var(--sub); }
+  .result-msg { font-size: 15px; font-weight: 700; margin-top: 4px; }
+  .result-sub { color: var(--sub); font-size: 13px; margin-top: 2px; }
+
+  .review-list {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .review-item {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 14px;
+    border-left: 4px solid var(--bad);
+  }
+  .review-word { font-weight: 800; font-size: 15px; }
+  .review-day { font-size: 11px; color: var(--sub); font-weight: 600; }
+  .review-row { font-size: 13px; margin-top: 6px; display: flex; gap: 6px; }
+  .review-row .lbl { color: var(--sub); min-width: 42px; flex-shrink: 0; }
+  .review-row .your { color: var(--bad); font-weight: 600; }
+  .review-row .ans { color: var(--good); font-weight: 700; }
+  .review-empty {
+    text-align: center;
+    color: var(--sub);
+    font-size: 14px;
+    padding: 30px 10px;
+  }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-row .primary-btn, .btn-row .secondary-btn { margin-top: 0; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="words.js"></script>
+<script>
+
+// ---- editable vocabulary layer: custom words, edits, deletions, category CRUD ----
+let customWords = [];           // brand-new words the user added (each has a unique id)
+let wordEdits = {};             // builtin id -> { word, meaning } override
+let deletedBuiltinIds = new Set(); // builtin ids the user deleted
+let categoryRenames = {};       // ORIGINAL RAW_DATA .set value -> current display name
+let deletedCategories = new Set(); // display names of categories the user deleted
+let extraCategories = [];       // categories the user created that may still be empty
+let categoryOrder = [];         // user's custom display order for categories (drag-to-reorder)
+
+function normalizeWord(w) {
+  return (w || '').toLowerCase().replace(/\(.*?\)/g, '').trim();
+}
+
+function builtinDisplaySet(origSet) {
+  return categoryRenames[origSet] || origSet;
+}
+
+function applyCategoryOrder(names) {
+  if (categoryOrder.length === 0) return names;
+  const ordered = categoryOrder.filter(n => names.includes(n));
+  const rest = names.filter(n => !categoryOrder.includes(n));
+  return ordered.concat(rest);
+}
+
+// ---- group by set (day range) - rebuilt whenever anything above changes ----
+let setOrder = [];
+let bySet = {};
+let ALL_DATA = [];
+let ALL_MEANINGS = [];
+
+function rebuildDerivedData() {
+  const builtinItems = [];
+  for (let i = 0; i < RAW_DATA.length; i++) {
+    const id = 'builtin-' + i;
+    if (deletedBuiltinIds.has(id)) continue;
+    const base = RAW_DATA[i];
+    const set = builtinDisplaySet(base.set);
+    if (deletedCategories.has(set)) continue;
+    let word = base.word, opts = base.opts, ans = base.ans;
+    const edit = wordEdits[id];
+    if (edit) {
+      word = edit.word;
+      opts = base.opts.slice();
+      opts[base.ans - 1] = edit.meaning;
+    }
+    builtinItems.push({ ...base, id, word, opts, ans, set });
+  }
+  const customItems = customWords.filter(w => !deletedCategories.has(w.set));
+
+  ALL_DATA = builtinItems.concat(customItems);
+  setOrder = [];
+  bySet = {};
+  ALL_DATA.forEach(it => {
+    if (!bySet[it.set]) { bySet[it.set] = []; setOrder.push(it.set); }
+    bySet[it.set].push(it);
+  });
+  extraCategories.forEach(name => {
+    if (!deletedCategories.has(name) && !bySet[name]) {
+      bySet[name] = [];
+      setOrder.push(name);
+    }
+  });
+  setOrder = applyCategoryOrder(setOrder);
+  // pool of every word's Korean meaning, for building distractor choices
+  ALL_MEANINGS = ALL_DATA.map(it => ({ word: it.word, day: it.day, meaning: it.opts[it.ans - 1] }));
+}
+rebuildDerivedData();
+
+function buildMeaningQuestion(it) {
+  const correctMeaning = it.opts[it.ans - 1];
+  const seen = new Set([correctMeaning]);
+  const candidates = shuffle(ALL_MEANINGS.filter(m => m.word !== it.word));
+  const distractors = [];
+  for (const m of candidates) {
+    if (distractors.length >= 4) break;
+    if (seen.has(m.meaning)) continue;
+    seen.add(m.meaning);
+    distractors.push(m.meaning);
+  }
+  const opts = shuffle([correctMeaning, ...distractors]);
+  const ans = opts.indexOf(correctMeaning);
+  return { word: it.word, day: it.day, set: it.set, opts, ans };
+}
+
+// ---- reversed mode: 뜻을 보고 원래 시험지의 선지(오답 단어들 그대로) 중 알맞은 단어 고르기 ----
+// word -> Korean meaning, built from every headword in ALL_DATA (first occurrence wins)
+let WORD_MEANING_MAP = {};
+// EXTRA_WORD_MEANINGS, EXTRA_WORD_MEANINGS_2 는 words.js 에서 불러옵니다.
+
+function rebuildWordMeaningMap() {
+  WORD_MEANING_MAP = {};
+  ALL_DATA.forEach(it => {
+  const key = normalizeWord(it.word);
+  if (!(key in WORD_MEANING_MAP)) WORD_MEANING_MAP[key] = it.opts[it.ans - 1];
+});
+Object.keys(EXTRA_WORD_MEANINGS).forEach(key => {
+  if (!(key in WORD_MEANING_MAP)) WORD_MEANING_MAP[key] = EXTRA_WORD_MEANINGS[key];
+});
+Object.keys(EXTRA_WORD_MEANINGS_2).forEach(key => {
+  if (!(key in WORD_MEANING_MAP)) WORD_MEANING_MAP[key] = EXTRA_WORD_MEANINGS_2[key];
+});
+}
+rebuildWordMeaningMap();
+
+function buildWordQuestion(it) {
+  // keep the original answer sheet's option order and wrong-word distractors,
+  // just swap the Korean-meaning slot for the actual target word
+  const opts = it.opts.slice();
+  const ansIdx = it.ans - 1;
+  const promptMeaning = opts[ansIdx];
+  opts[ansIdx] = it.word;
+  return { word: it.word, day: it.day, set: it.set, opts, ans: ansIdx, promptMeaning };
+}
+function buildQuestionForMode(it) {
+  return state.quizMode === 'word' ? buildWordQuestion(it) : buildMeaningQuestion(it);
+}
+
+// ---- persistence: try localStorage, silently fall back to in-memory only ----
+const FAV_KEY = 'voca_quiz_favorites_v1';
+let memoryFallback = null; // used only if localStorage is unavailable
+function loadFavorites() {
+  try {
+    const raw = localStorage.getItem(FAV_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch (e) {
+    return new Set();
+  }
+}
+function saveFavorites(set) {
+  try {
+    localStorage.setItem(FAV_KEY, JSON.stringify([...set]));
+  } catch (e) {
+    // storage unavailable in this environment (e.g. sandboxed preview) - favorites stay in-memory only for this session
+  }
+}
+
+// ---- unified persistence for the whole editable layer ----
+const EDITS_KEY = 'voca_quiz_edits_v2';
+function loadEditState() {
+  try {
+    const raw = localStorage.getItem(EDITS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+function saveEditState() {
+  try {
+    localStorage.setItem(EDITS_KEY, JSON.stringify({
+      customWords,
+      wordEdits,
+      deletedBuiltinIds: [...deletedBuiltinIds],
+      categoryRenames,
+      deletedCategories: [...deletedCategories],
+      extraCategories,
+      categoryOrder,
+    }));
+  } catch (e) {
+    // storage unavailable - edits stay in-memory only for this session
+  }
+}
+(function initEditState() {
+  const loaded = loadEditState();
+  if (loaded) {
+    customWords = loaded.customWords || [];
+    wordEdits = loaded.wordEdits || {};
+    deletedBuiltinIds = new Set(loaded.deletedBuiltinIds || []);
+    categoryRenames = loaded.categoryRenames || {};
+    deletedCategories = new Set(loaded.deletedCategories || []);
+    extraCategories = loaded.extraCategories || [];
+    categoryOrder = loaded.categoryOrder || [];
+    rebuildDerivedData();
+  }
+  rebuildWordMeaningMap();
+})();
+
+const CUSTOM_SET_NAME = '\ub0b4 \ub2e8\uc5b4\uc7a5';
+let nextCustomId = 1;
+function addCustomWord(wordRaw, meaningRaw, categoryRaw) {
+  const word = (wordRaw || '').trim();
+  const meaning = (meaningRaw || '').trim();
+  const category = (categoryRaw || '').trim() || CUSTOM_SET_NAME;
+  if (!word || !meaning) {
+    return { ok: false, msg: '\ub2e8\uc5b4\uc640 \ub73b\uc744 \ubaa8\ub450 \uc785\ub825\ud574\uc8fc\uc138\uc694.' };
+  }
+  if (ALL_DATA.some(w => normalizeWord(w.word) === normalizeWord(word) && w.set === category)) {
+    return { ok: false, msg: '\uc774 \uce74\ud14c\uace0\ub9ac\uc5d0 \uc774\ubbf8 \uc788\ub294 \ub2e8\uc5b4\uc608\uc694.' };
+  }
+  const candidatePool = shuffle(
+    [...new Set(RAW_DATA.map(it => it.word))].filter(w => normalizeWord(w) !== normalizeWord(word))
+  );
+  const distractors = candidatePool.slice(0, 4);
+  if (distractors.length < 4) {
+    return { ok: false, msg: '\ub2e8\uc5b4 \ud6c4\ubcf4\uac00 \ubd80\uc871\ud574\uc694.' };
+  }
+  const ansPos = Math.floor(Math.random() * 5);
+  const opts = distractors.slice();
+  opts.splice(ansPos, 0, meaning);
+  const item = {
+    id: 'custom-' + (nextCustomId++) + '-' + Date.now(),
+    num: customWords.length + 1,
+    word: word,
+    day: '\ub0b4\ub2e8\uc5b4',
+    opts: opts,
+    ans: ansPos + 1,
+    set: category,
+  };
+  customWords.push(item);
+  deletedCategories.delete(category);
+  rebuildDerivedData();
+  rebuildWordMeaningMap();
+  saveEditState();
+  return { ok: true, msg: `"${word}" \ub2e8\uc5b4\uac00 \ucd94\uac00\ub410\uc5b4\uc694!` };
+}
+
+// ---- build the full words.js file content from current in-app data (built-ins + edits + custom words) ----
+function buildWordsJsFileContent() {
+  const header = '// ============================================================\n' +
+    '// words.js \u2014 \uc601\ub2e8\uc5b4 \ud034\uc988\uac8c\uc784 \ub2e8\uc5b4 \ub370\uc774\ud130 \uc804\uc6a9 \ud30c\uc77c\n' +
+    '// index.html \uc740 \uc774 \ud30c\uc77c\uc744 <script src="words.js"><\/script> \ub85c \ubd88\ub7ec\uc635\ub2c8\ub2e4.\n' +
+    '// \ub450 \ud30c\uc77c\uc740 \ud56d\uc0c1 \uac19\uc740 \ud3f4\ub354\uc5d0 \ud568\uaed8 \uc788\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n' +
+    '//\n' +
+    '// \ub2e8\uc5b4\ub97c \ucd94\uac00/\uc218\uc815\ud560 \ub54c\ub294 \uc774 \ud30c\uc77c\ub9cc \uc5f4\uc5b4\uc11c \uace0\uce58\uba74 \ub429\ub2c8\ub2e4.\n' +
+    '// (index.html \uc758 \uc571 \ub85c\uc9c1\uc740 \uac74\ub4dc\ub9b4 \ud544\uc694 \uc5c6\uc74c \u2192 \uc791\uc5c5\ub7c9 \uc808\uc57d)\n' +
+    '// ============================================================\n\n' +
+    '// ---- \uae30\ubcf8 \uc81c\uacf5 \ub2e8\uc5b4 \ubaa9\ub85d ----\n' +
+    '// \ud56d\ubaa9 \ud615\uc2dd: { num: \ubb38\ud56d\ubc88\ud638, word: "\ub2e8\uc5b4", day: "D1"~"D50" \ub4f1, opts: [\uc120\ud0dd\uc9c05\uac1c(\ud558\ub098\ub294 \uc815\ub2f5 \ub73b)], ans: \uc815\ub2f5\ubc88\ud638(1~5), set: "\uce74\ud14c\uace0\ub9ac\uba85" }\n' +
+    '// \u26a0\ufe0f \ud55c \ud56d\ubaa9 = \ud55c \uc904. \uc0c8 Day \ub97c \ucd94\uac00\ud560 \ub54c\ub294 \uc544\ub798 \ubc30\uc5f4 \uc548\uc5d0 \ud56d\ubaa9\uc744 \ud55c \uc904\uc529 \uc774\uc5b4 \ubd99\uc774\uc138\uc694.\n' +
+    'const RAW_DATA = [\n';
+
+  let num = 1;
+  const lines = [];
+  setOrder.forEach(setName => {
+    (bySet[setName] || []).forEach(w => {
+      const optsJs = '[' + w.opts.map(o => JSON.stringify(o)).join(', ') + ']';
+      lines.push('  { num: ' + (num++) + ', word: ' + JSON.stringify(w.word) + ', day: ' + JSON.stringify(w.day) + ', opts: ' + optsJs + ', ans: ' + w.ans + ', set: ' + JSON.stringify(w.set) + ' },');
+    });
+  });
+
+  const footer = '\n];\n\n' +
+    '// ---- \ubcf4\uae30(distractor)\ub85c\ub9cc \ub098\uc624\ub294 \ub2e8\uc5b4\ub4e4\uc758 \ub73b (\uc5ed\ubc29\ud5a5 \ubaa8\ub4dc\uc6a9) ----\n' +
+    '// \ud615\uc2dd: "\ub2e8\uc5b4": "\ub73b"\n' +
+    'const EXTRA_WORD_MEANINGS = ' + JSON.stringify(EXTRA_WORD_MEANINGS, null, 2) + ';\n\n' +
+    '// ---- \ub450 \ubc88\uc9f8 \ubcf4\ucda9 \ub2e8\uc5b4 \ub73b \uc0ac\uc804 (\ube48\uce78/\uc218\ud2b9/\uc601\ub3c5 \ub4f1) ----\n' +
+    'const EXTRA_WORD_MEANINGS_2 = ' + JSON.stringify(EXTRA_WORD_MEANINGS_2, null, 2) + ';\n';
+
+  return header + lines.join('\n') + footer;
+}
+
+function downloadWordsJsFile() {
+  const content = buildWordsJsFileContent();
+  const blob = new Blob([content], { type: 'text/javascript' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'words.js';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ---- bulk paste import: "Day 1" / "Day 1 파생어" header line, then "word 뜻" lines ----
+function parseBulkWordPaste(text) {
+  const lines = (text || '').replace(/\r\n/g, '\n').split('\n');
+  const items = [];
+  let currentCategory = null;
+  const wordLineRe = /^([A-Za-z][A-Za-z'\-]*)\s+(.+)$/;
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    const m = line.match(wordLineRe);
+    const rest = m ? m[2].trim() : '';
+    const looksLikeWordLine = m && currentCategory && !/^[0-9]/.test(rest) && /[\uAC00-\uD7A3]/.test(rest);
+    if (looksLikeWordLine) {
+      items.push({ category: currentCategory, word: m[1].trim(), meaning: rest });
+    } else {
+      currentCategory = line;
+    }
+  }
+  return items;
+}
+
+function addBulkCustomWords(items) {
+  const result = { added: 0, skippedDup: [], skippedEmpty: [], lowOptions: 0 };
+  const existingMeanings = ALL_DATA.map(it => ({ word: it.word, meaning: it.opts[it.ans - 1] }));
+  const batchMeanings = items.map(it => ({ word: it.word, meaning: it.meaning }));
+  const combinedPool = existingMeanings.concat(batchMeanings);
+
+  items.forEach(entry => {
+    const word = (entry.word || '').trim();
+    const meaning = (entry.meaning || '').trim();
+    const category = (entry.category || '').trim() || CUSTOM_SET_NAME;
+    if (!word || !meaning) { result.skippedEmpty.push(word || meaning || '(빈 항목)'); return; }
+    const dup = ALL_DATA.some(w => normalizeWord(w.word) === normalizeWord(word) && w.set === category);
+    if (dup) { result.skippedDup.push(word); return; }
+
+    const seen = new Set([meaning]);
+    const candidates = shuffle(combinedPool.filter(m => normalizeWord(m.word) !== normalizeWord(word)));
+    const distractors = [];
+    for (const c of candidates) {
+      if (distractors.length >= 4) break;
+      if (seen.has(c.meaning)) continue;
+      seen.add(c.meaning);
+      distractors.push(c.meaning);
+    }
+    if (distractors.length < 4) result.lowOptions++;
+
+    const ansPos = Math.floor(Math.random() * (distractors.length + 1));
+    const opts = distractors.slice();
+    opts.splice(ansPos, 0, meaning);
+    const item = {
+      id: 'custom-' + (nextCustomId++) + '-' + Date.now() + '-' + Math.floor(Math.random() * 10000),
+      num: customWords.length + 1,
+      word: word,
+      day: '내단어',
+      opts: opts,
+      ans: ansPos + 1,
+      set: category,
+    };
+    customWords.push(item);
+    ALL_DATA.push(item);
+    deletedCategories.delete(category);
+    result.added++;
+  });
+
+  rebuildDerivedData();
+  rebuildWordMeaningMap();
+  saveEditState();
+  return result;
+}
+
+function editWord(id, wordRaw, meaningRaw) {
+  const word = (wordRaw || '').trim();
+  const meaning = (meaningRaw || '').trim();
+  if (!word || !meaning) {
+    return { ok: false, msg: '\ub2e8\uc5b4\uc640 \ub73b\uc744 \ubaa8\ub450 \uc785\ub825\ud574\uc8fc\uc138\uc694.' };
+  }
+  if (id.startsWith('custom-')) {
+    const cw = customWords.find(w => w.id === id);
+    if (!cw) return { ok: false, msg: '\ub2e8\uc5b4\ub97c \ucc3e\uc744 \uc218 \uc5c6\uc5b4\uc694.' };
+    cw.word = word;
+    cw.opts[cw.ans - 1] = meaning;
+  } else {
+    wordEdits[id] = { word, meaning };
+  }
+  rebuildDerivedData();
+  rebuildWordMeaningMap();
+  saveEditState();
+  return { ok: true, msg: '\uc218\uc815\ub410\uc5b4\uc694!' };
+}
+
+function deleteWord(id) {
+  if (id.startsWith('custom-')) {
+    customWords = customWords.filter(w => w.id !== id);
+  } else {
+    deletedBuiltinIds.add(id);
+  }
+  rebuildDerivedData();
+  rebuildWordMeaningMap();
+  saveEditState();
+}
+
+function addCategory(nameRaw) {
+  const name = (nameRaw || '').trim();
+  if (!name) return { ok: false, msg: '\uce74\ud14c\uace0\ub9ac \uc774\ub984\uc744 \uc785\ub825\ud574\uc8fc\uc138\uc694.' };
+  if (setOrder.includes(name)) return { ok: false, msg: '\uc774\ubbf8 \uc788\ub294 \uce74\ud14c\uace0\ub9ac\uc608\uc694.' };
+  deletedCategories.delete(name);
+  extraCategories.push(name);
+  rebuildDerivedData();
+  saveEditState();
+  return { ok: true, msg: `"${name}" \uce74\ud14c\uace0\ub9ac\uac00 \ucd94\uac00\ub410\uc5b4\uc694!` };
+}
+
+function renameCategory(oldName, newNameRaw) {
+  const newName = (newNameRaw || '').trim();
+  if (!newName) return { ok: false, msg: '\uc0c8 \uc774\ub984\uc744 \uc785\ub825\ud574\uc8fc\uc138\uc694.' };
+  if (newName === oldName) return { ok: false, msg: '\uae30\uc874 \uc774\ub984\uacfc \uac19\uc544\uc694.' };
+  if (setOrder.includes(newName)) return { ok: false, msg: '\uc774\ubbf8 \uc788\ub294 \uc774\ub984\uc774\uc5d0\uc694.' };
+
+  RAW_DATA.forEach(it => {
+    if (builtinDisplaySet(it.set) === oldName) categoryRenames[it.set] = newName;
+  });
+  customWords.forEach(w => { if (w.set === oldName) w.set = newName; });
+  extraCategories = extraCategories.map(n => (n === oldName ? newName : n));
+  categoryOrder = categoryOrder.map(n => (n === oldName ? newName : n));
+  deletedCategories.delete(newName);
+
+  if (state.selectedSets.has(oldName)) {
+    state.selectedSets.delete(oldName);
+    state.selectedSets.add(newName);
+  }
+  rebuildDerivedData();
+  saveEditState();
+  return { ok: true, msg: '\uc774\ub984\uc774 \ubc14\ub00c\uc5c8\uc5b4\uc694!' };
+}
+
+function deleteCategory(name) {
+  deletedCategories.add(name);
+  customWords = customWords.filter(w => w.set !== name);
+  extraCategories = extraCategories.filter(n => n !== name);
+  state.selectedSets.delete(name);
+  rebuildDerivedData();
+  rebuildWordMeaningMap();
+  saveEditState();
+}
+
+function exportCustomCode() {
+  const hasEdits = customWords.length > 0 || Object.keys(wordEdits).length > 0 ||
+    deletedBuiltinIds.size > 0 || Object.keys(categoryRenames).length > 0 ||
+    deletedCategories.size > 0 || extraCategories.length > 0 || categoryOrder.length > 0;
+  if (!hasEdits) return '';
+  try {
+    return b64EncodeUtf8(JSON.stringify({
+      customWords, wordEdits,
+      deletedBuiltinIds: [...deletedBuiltinIds],
+      categoryRenames,
+      deletedCategories: [...deletedCategories],
+      extraCategories,
+      categoryOrder,
+    }));
+  } catch (e) {
+    return '';
+  }
+}
+function importCustomCode(code) {
+  const trimmed = (code || '').trim();
+  if (!trimmed) return { ok: false, msg: '\ucf54\ub4dc\ub97c \uba3c\uc800 \ubd99\uc5ec\ub123\uc5b4\uc8fc\uc138\uc694.' };
+  try {
+    const bundle = JSON.parse(b64DecodeUtf8(trimmed));
+    customWords = bundle.customWords || [];
+    wordEdits = bundle.wordEdits || {};
+    deletedBuiltinIds = new Set(bundle.deletedBuiltinIds || []);
+    categoryRenames = bundle.categoryRenames || {};
+    deletedCategories = new Set(bundle.deletedCategories || []);
+    extraCategories = bundle.extraCategories || [];
+    categoryOrder = bundle.categoryOrder || [];
+    rebuildDerivedData();
+    rebuildWordMeaningMap();
+    saveEditState();
+    return { ok: true, msg: '\ubaa8\ub4e0 \uc218\uc815 \ub0b4\uc6a9\uc744 \ubd88\ub7ec\uc654\uc5b4\uc694!' };
+  } catch (e) {
+    return { ok: false, msg: '\ucf54\ub4dc\uac00 \uc62c\ubc14\ub974\uc9c0 \uc54a\uc544\uc694.' };
+  }
+}
+
+let state = {
+  screen: 'setup',      // setup | quiz | result
+  selectedSets: new Set(), // start with nothing selected - user picks ranges
+  rangePage: 0,          // current page index for the "범위 선택" chip pager
+  count: 560,
+  pool: [],
+  queue: [],
+  idx: 0,
+  score: 0,
+  answered: false,
+  selectedOpt: null,
+  wrongList: [],
+  favorites: loadFavorites(),   // keys: `${word}__${day}`
+  favoriteMode: false,    // true when quizzing only favorited words
+  quizMode: 'meaning',    // 'meaning' (\ub2e8\uc5b4->\ub73b \uace0\ub974\uae30, \uae30\uc874/\uace0\uc815) | 'word' (\ub73b->\ub2e8\uc5b4 \uace0\ub974\uae30, \uc0c8 \ubaa8\ub4dc)
+  manageCategory: null,   // currently selected category in the manage screen
+  manageEditId: null,     // id of the word currently being inline-edited in the manage screen
+  showManageAddForm: false,   // toggles the add-word form in the manage screen
+  showAddCategoryForm: false, // toggles the add-category form in the manage screen
+  showRenameCategoryForm: false, // toggles the rename-category form
+  showBulkPasteForm: false, // toggles the bulk-paste textarea in the manage screen
+  bulkReview: null, // { items: [{category, word, meaning}], index } while reviewing a bulk paste
+};
+let transientHint = null; // one-shot message shown in the fav save/load hint area
+let transientCustomHint = null; // one-shot message shown in the custom-word add/save area
+
+
+function favKey(it) { return `${it.word}__${it.day}__${it.set}`; }
+function isFav(it) { return state.favorites.has(favKey(it)); }
+function toggleFav(it) {
+  const k = favKey(it);
+  if (state.favorites.has(k)) state.favorites.delete(k);
+  else state.favorites.add(k);
+  saveFavorites(state.favorites);
+  render();
+}
+
+// ---- UTF-8-safe base64 (plain btoa/atob choke on Korean text) ----
+function b64EncodeUtf8(str) {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+function b64DecodeUtf8(str) {
+  return decodeURIComponent(escape(atob(str)));
+}
+
+// ---- portable save/load via a copyable code (works even when localStorage is blocked) ----
+function exportFavCode() {
+  if (state.favorites.size === 0) return '';
+  try {
+    return b64EncodeUtf8(JSON.stringify([...state.favorites]));
+  } catch (e) {
+    return '';
+  }
+}
+function importFavCode(code) {
+  const trimmed = (code || '').trim();
+  if (!trimmed) return { ok: false, msg: '\ucf54\ub4dc\ub97c \uba3c\uc800 \ubd99\uc5ec\ub123\uc5b4\uc8fc\uc138\uc694.' };
+  try {
+    const arr = JSON.parse(b64DecodeUtf8(trimmed));
+    if (!Array.isArray(arr)) throw new Error('invalid');
+    arr.forEach(k => state.favorites.add(k));
+    saveFavorites(state.favorites);
+    return { ok: true, msg: `${arr.length}\uac1c \ub2e8\uc5b4\ub97c \ubd88\ub7ec\uc654\uc5b4\uc694!` };
+  } catch (e) {
+    return { ok: false, msg: '\ucf54\ub4dc\uac00 \uc62c\ubc14\ub974\uc9c0 \uc54a\uc544\uc694.' };
+  }
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildPool() {
+  let pool = [];
+  state.selectedSets.forEach(s => { pool = pool.concat(bySet[s]); });
+  return pool;
+}
+
+function startQuiz() {
+  const pool = shuffle(buildPool());
+  if (pool.length === 0) return;
+  const n = Math.min(state.count, pool.length);
+  state.queue = pool.slice(0, n).map(buildQuestionForMode);
+  state.idx = 0;
+  state.score = 0;
+  state.answered = false;
+  state.selectedOpt = null;
+  state.wrongList = [];
+  state.favoriteMode = false;
+  state.screen = 'quiz';
+  render();
+}
+
+function startFavoriteQuiz() {
+  const favItems = ALL_DATA.filter(isFav);
+  if (favItems.length === 0) return;
+  state.queue = shuffle(favItems).map(buildQuestionForMode);
+  state.idx = 0;
+  state.score = 0;
+  state.answered = false;
+  state.selectedOpt = null;
+  state.wrongList = [];
+  state.favoriteMode = true;
+  state.screen = 'quiz';
+  render();
+}
+
+function selectOption(i) {
+  const q = state.queue[state.idx];
+
+  // if this question was already answered, undo its previous scoring effect first
+  if (q.answered) {
+    if (i === q.selectedOpt) return; // clicked the same option again - nothing to change
+    if (q.selectedOpt === q.ans) {
+      state.score--;
+    } else {
+      const wi = state.wrongList.findIndex(w =>
+        w.word === q.word && w.day === q.day && w.set === q.set && w.your === q.selectedOpt);
+      if (wi !== -1) state.wrongList.splice(wi, 1);
+    }
+  }
+
+  state.answered = true;
+  state.selectedOpt = i;
+  q.answered = true;
+  q.selectedOpt = i;
+  if (i === q.ans) {
+    state.score++;
+  } else {
+    state.wrongList.push({ ...q, your: i });
+  }
+  render();
+}
+
+function goToQuestion(newIdx) {
+  if (newIdx < 0 || newIdx >= state.queue.length) return;
+  state.idx = newIdx;
+  const q = state.queue[newIdx];
+  state.answered = !!q.answered;
+  state.selectedOpt = q.answered ? q.selectedOpt : null;
+  render();
+}
+
+function nextQuestion() {
+  if (state.idx < state.queue.length - 1) {
+    goToQuestion(state.idx + 1);
+  } else {
+    state.screen = 'result';
+    render();
+  }
+}
+
+function prevQuestion() {
+  goToQuestion(state.idx - 1);
+}
+
+function restart() {
+  state.screen = 'setup';
+  render();
+}
+
+function retryWrong() {
+  if (state.wrongList.length === 0) return;
+  state.queue = shuffle(state.wrongList.map(w => {
+    const item = ALL_DATA.find(d => d.word === w.word && d.day === w.day && d.set === w.set);
+    return buildQuestionForMode(item);
+  }));
+  state.idx = 0;
+  state.score = 0;
+  state.answered = false;
+  state.selectedOpt = null;
+  state.wrongList = [];
+  state.favoriteMode = false;
+  state.screen = 'quiz';
+  render();
+}
+
+function toggleSet(s) {
+  if (state.selectedSets.has(s)) state.selectedSets.delete(s);
+  else state.selectedSets.add(s);
+  if (state.selectedSets.size === 0) state.selectedSets.add(s);
+  render();
+}
+
+function selectAllSets() {
+  setOrder.forEach(s => state.selectedSets.add(s));
+  render();
+}
+
+function toggleQuizMode() {
+  state.quizMode = state.quizMode === 'word' ? 'meaning' : 'word';
+  render();
+}
+
+function setManageCategory(name) {
+  state.manageCategory = name;
+  state.manageEditId = null;
+  state.showManageAddForm = false;
+  state.showRenameCategoryForm = false;
+  render();
+}
+
+function closeManage() {
+  state.screen = 'setup';
+  state.manageEditId = null;
+  state.showManageAddForm = false;
+  state.showAddCategoryForm = false;
+  state.showRenameCategoryForm = false;
+  render();
+  window.scrollTo(0, 0);
+      const appEl = document.getElementById('app');
+      if (appEl) appEl.scrollTop = 0;
+}
+
+function changeCount(delta) {
+  const max = buildPool().length;
+  state.count = Math.max(5, Math.min(max, state.count + delta));
+  render();
+}
+
+function commitCountInput(rawValue) {
+  const max = Math.max(buildPool().length, 5);
+  let v = parseInt(rawValue, 10);
+  if (isNaN(v)) v = state.count;
+  v = Math.max(5, Math.min(max, v));
+  state.count = v;
+  render();
+}
+
+const circled = ["1","2","3","4","5"];
+const RANGE_PAGE_SIZE = 10;
+
+function renderSetup() {
+  const totalAvail = buildPool().length;
+  const totalPages = Math.max(1, Math.ceil(setOrder.length / RANGE_PAGE_SIZE));
+  if (state.rangePage > totalPages - 1) state.rangePage = totalPages - 1;
+  if (state.rangePage < 0) state.rangePage = 0;
+  const pageStart = state.rangePage * RANGE_PAGE_SIZE;
+  const pagedSets = setOrder.slice(pageStart, pageStart + RANGE_PAGE_SIZE);
+  const chips = pagedSets.map(s => {
+    const active = state.selectedSets.has(s);
+    return `<button class="chip ${active ? 'active' : ''}" data-set="${s}">
+      <span>${s}</span><small>${bySet[s].length}\uac1c \ub2e8\uc5b4</small>
+    </button>`;
+  }).join('');
+  const rangePageNav = totalPages > 1 ? `
+    <span class="range-page-nav">
+      <button id="rangePrevBtn" ${state.rangePage === 0 ? 'disabled' : ''}>\u2039</button>
+      <span class="range-page-label">${state.rangePage + 1}/${totalPages}</span>
+      <button id="rangeNextBtn" ${state.rangePage === totalPages - 1 ? 'disabled' : ''}>\u203a</button>
+    </span>
+  ` : '';
+
+  const favCount = state.favorites.size;
+  const hintMsg = transientHint || '\uc990\uaca8\ucc3e\uae30\ub97c \ucf54\ub4dc\ub85c \ubcf5\uc0ac\ud574\ub450\uba74 \ub2e4\uc74c\uc5d0 \ub2e4\uc2dc \uc5f4 \ub54c \ubd99\uc5ec\ub123\uae30\ub85c \ubcf5\uc6d0\ud560 \uc218 \uc788\uc5b4\uc694.';
+  transientHint = null;
+
+  return `
+    <div class="screen">
+      <div class="setup-grid">
+        <div class="setup-col">
+          <div class="hero">
+            <div class="hero-emoji">\ud83e\udde0</div>
+            <h1>\uc601\ub2e8\uc5b4 \ud034\uc988</h1>
+            <p>\ubc94\uc704\ub97c \uace0\ub974\uace0 \ubc14\ub85c \ud480\uc5b4\ubcf4\uc138\uc694.<br>\ubb38\uc81c \uc21c\uc11c\ub294 \ub9e4\ubc88 \uc11e\uc5ec\uc11c \ub098\uc640\uc694.</p>
+          </div>
+
+          <div class="mode-toggle-row">
+            <div class="mode-toggle" id="modeToggleBtn">
+              <div class="mode-toggle-thumb ${state.quizMode === 'word' ? 'right' : ''}"></div>
+              <span class="mode-toggle-label ${state.quizMode === 'meaning' ? 'active' : ''}">\ub2e8\uc5b4\u2192\ub73b</span>
+              <span class="mode-toggle-label ${state.quizMode === 'word' ? 'active' : ''}">\ub73b\u2192\ub2e8\uc5b4</span>
+            </div>
+            <p class="mode-toggle-hint">${state.quizMode === 'word' ? '\ub73b\uc744 \ubcf4\uace0 \uc54c\ub9de\uc740 \ub2e8\uc5b4\ub97c \uace0\ub974\ub294 \ubaa8\ub4dc\uc608\uc694.' : '\ub2e8\uc5b4\ub97c \ubcf4\uace0 \uc54c\ub9de\uc740 \ub73b\uc744 \uace0\ub974\ub294 \ubaa8\ub4dc\uc608\uc694.'}</p>
+          </div>
+
+          <div class="section-label section-label-row">
+            <span>\ubc94\uc704 \uc120\ud0dd (${state.selectedSets.size}/${setOrder.length})</span>
+            ${rangePageNav}
+          </div>
+          <div class="chip-grid">${chips}</div>
+          <button class="allbtn" id="allBtn">\uc804\uccb4 \uc120\ud0dd</button>
+
+          <div class="section-label">\ud83d\udee0\ufe0f \ub2e8\uc5b4\uc7a5 \uad00\ub9ac</div>
+          <button class="allbtn" id="openManageBtn">\ub2e8\uc5b4/\uce74\ud14c\uace0\ub9ac \ucd94\uac00\u00b7\uc218\uc815\u00b7\uc0ad\uc81c</button>
+        </div>
+
+        <div class="setup-col">
+          <div class="section-label" style="margin-top:0;">\u2b50 \uc990\uaca8\ucc3e\uae30 (${favCount}\uac1c)</div>
+          <button class="fav-quiz-btn" id="favQuizBtn" ${favCount === 0 ? 'disabled' : ''}>
+            \u2b50 \uc990\uaca8\ucc3e\uae30 \ub2e8\uc5b4\ub9cc \ud480\uae30${favCount > 0 ? ` (${favCount}\uac1c)` : ''}
+          </button>
+
+          <div class="fav-io">
+            <div class="section-label" style="margin:14px 0 6px;">\ud83d\udcbe \uc990\uaca8\ucc3e\uae30 \uc800\uc7a5 / \ubd88\ub7ec\uc624\uae30</div>
+            <div class="fav-io-row">
+              <input readonly id="favCodeOut" value="${exportFavCode()}" placeholder="\uc990\uaca8\ucc3e\uae30\uac00 \uc5c6\uc5b4\uc694">
+              <button id="copyCodeBtn" ${favCount === 0 ? 'disabled' : ''}>\ubcf5\uc0ac</button>
+            </div>
+            <div class="fav-io-row">
+              <input id="favCodeIn" placeholder="\ucf54\ub4dc \ubd99\uc5ec\ub123\uae30">
+              <button id="importCodeBtn">\ubd88\ub7ec\uc624\uae30</button>
+            </div>
+            <p class="fav-io-hint" id="favIoHint">${hintMsg}</p>
+          </div>
+
+          <div class="count-row">
+            <div class="section-label" style="margin:0;">\ubb38\uc81c \uc218</div>
+            <div class="stepper">
+              <button id="minusBtn">\u2212</button>
+              <input type="number" id="countInput" inputmode="numeric" value="${state.count}" min="5" max="${Math.max(totalAvail, 5)}" step="5">
+              <button id="plusBtn">+</button>
+            </div>
+          </div>
+          <p style="font-size:12px;color:var(--sub);margin:0 4px;">${totalAvail === 0 ? '\ub300 \ubc94\uc704\ub97c \uba3c\uc800 \uc120\ud0dd\ud574\uc8fc\uc138\uc694' : `\uc120\ud0dd\ub41c \ubc94\uc704 \ucd1d ${totalAvail}\uac1c \uc911\uc5d0\uc11c \ucd9c\uc81c\ub429\ub2c8\ub2e4`}</p>
+
+          <div class="start-btn">
+            <button class="primary-btn" id="startBtn" ${totalAvail === 0 ? 'disabled' : ''}>\ud034\uc988 \uc2dc\uc791\ud558\uae30</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderQuiz() {
+  const q = state.queue[state.idx];
+  const pct = Math.round((state.idx) / state.queue.length * 100);
+  const isWordMode = state.quizMode === 'word';
+
+  const optsHtml = q.opts.map((opt, i) => {
+    let cls = 'opt';
+    let mark = '';
+    if (state.answered) {
+      if (i === q.ans) { cls += ' correct'; mark = '\u2713'; }
+      else if (i === state.selectedOpt) { cls += ' wrong'; mark = '\u2717'; }
+    } else if (i === state.selectedOpt) {
+      cls += ' selected';
+    }
+    let revealHtml = '';
+    if (isWordMode && state.answered && i !== q.ans) {
+      const m = WORD_MEANING_MAP[normalizeWord(opt)];
+      if (m) revealHtml = `<span class="opt-reveal">${m}</span>`;
+    }
+    return `<button class="${cls}" data-i="${i}">
+      <span class="num">${circled[i]}</span>
+      <span class="opt-text">${opt}${revealHtml}</span>
+      ${mark ? `<span class="opt-mark">${mark}</span>` : ''}
+    </button>`;
+  }).join('');
+
+  const isCorrect = state.answered && state.selectedOpt === q.ans;
+  const feedback = state.answered
+    ? `<div class="feedback show ${isCorrect ? 'good' : 'bad'}">
+        ${isCorrect ? '\uc815\ub2f5\uc774\uc5d0\uc694! \ud83c\udf89' : '\uc544\uc26c\uc6cc\uc694, \ub2e4\uc74c\uc5d0 \ub2e4\uc2dc \ub3c4\uc804\ud574\ubd10\uc694.'}
+      </div>`
+    : `<div class="feedback"></div>`;
+
+  const isLast = state.idx === state.queue.length - 1;
+  const promptText = isWordMode ? q.promptMeaning : q.word;
+  const subText = isWordMode ? '\uc54c\ub9de\uc740 \ub2e8\uc5b4\ub97c \uace0\ub974\uc138\uc694' : '\uc54c\ub9de\uc740 \ub73b\uc744 \uace0\ub974\uc138\uc694';
+
+  return `
+    <div class="topbar">
+      <div class="topbar-row">
+        <div class="topbar-left">
+          <button class="home-btn" id="quizHomeBtn" aria-label="\ud648\uc73c\ub85c">\ud83c\udfe0</button>
+          <div class="brand">\uc601\ub2e8\uc5b4 \ud034\uc988</div>
+        </div>
+        <div class="score-pill">${state.score} / ${state.queue.length}</div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="progress-label"><span>${state.idx + 1} / ${state.queue.length}</span><span>${q.set}</span></div>
+    </div>
+    <div class="screen" style="padding-top:6px;">
+      <div class="q-card">
+        <div class="quiz-grid">
+          <div class="quiz-meta">
+            <div class="q-head">
+              <span class="q-tag">${q.day}${state.favoriteMode ? ' \u00b7 \u2b50' : ''}</span>
+              <button class="fav-toggle ${isFav(q) ? 'active' : ''}" id="favToggle">${isFav(q) ? '\u2605' : '\u2606'}</button>
+            </div>
+            <div class="q-word ${isWordMode ? 'q-word-meaning' : ''}">${promptText}</div>
+            <div class="q-sub">${subText}</div>
+          </div>
+          <div class="options quiz-options">${optsHtml}</div>
+          <div class="quiz-feedback">${feedback}</div>
+        </div>
+      </div>
+      <div class="nav-row nav-row-split">
+        <button class="secondary-btn nav-prev-btn" id="prevBtn" ${state.idx === 0 ? 'disabled' : ''}>\u2190 \uc774\uc804 \ubb38\uc81c</button>
+        <button class="primary-btn" id="nextBtn" ${state.answered ? '' : 'disabled'}>
+          ${isLast ? '\uacb0\uacfc \ubcf4\uae30' : '\ub2e4\uc74c \ubb38\uc81c'}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderResult() {
+  const total = state.score + state.wrongList.length;
+  const pct = total ? Math.round(state.score / total * 100) : 0;
+  let msg, emoji;
+  if (pct >= 90) { msg = '\uc644\ubcbd\ud574\uc694! \ucd5c\uace0\uc608\uc694 \ud83d\udd25'; }
+  else if (pct >= 70) { msg = '\uc798\ud588\uc5b4\uc694! \uc870\uae08\ub9cc \ub354 \ud798\ub0b4\uc694 \ud83d\udcaa'; }
+  else if (pct >= 50) { msg = '\uad1c\ucc2e\uc544\uc694, \ubcf5\uc2b5\ud574\ubcf4\uc544\uc694 \ud83d\udcda'; }
+  else { msg = '\ud2c0\ub9b0 \ub2e8\uc5b4\ub97c \ub2e4\uc2dc \ubcf4\uace0 \uc640\uc694 \uc751\uc6d0\ud574\uc694'; }
+
+  const reviewHtml = state.wrongList.length === 0
+    ? `<div class="review-empty">\ud2c0\ub9b0 \ubb38\uc81c\uac00 \uc5c6\uc5b4\uc694! \ub300\ub2e8\ud574\uc694 \ud83d\udc4f</div>`
+    : state.wrongList.map((w, wi) => `
+      <div class="review-item">
+        <div class="review-item-head">
+          <span class="review-day">${w.day} \u00b7 ${w.set}</span>
+          <button class="fav-toggle small ${state.favorites.has(w.word + '__' + w.day) ? 'active' : ''}" data-review-i="${wi}">${state.favorites.has(w.word + '__' + w.day) ? '\u2605' : '\u2606'}</button>
+        </div>
+        <div class="review-word">${w.word}</div>
+        <div class="review-row"><span class="lbl">\ub0b4 \ub2f5</span><span class="your">${w.opts[w.your]}</span></div>
+        <div class="review-row"><span class="lbl">\uc815\ub2f5</span><span class="ans">${w.opts[w.ans]}</span></div>
+      </div>
+    `).join('');
+
+  return `
+    <div class="screen">
+      <div class="result-grid">
+        <div class="result-col">
+          <div class="result-hero">
+            <div class="result-ring" style="--pct:${pct}">
+              <div class="result-ring-inner">
+                <b>${pct}%</b>
+                <span>${state.score} / ${total}</span>
+              </div>
+            </div>
+            <div class="result-msg">${msg}</div>
+            <div class="result-sub">\ucd1d ${total}\ubb38\uc81c \uc911 ${state.score}\ubb38\uc81c \uc815\ub2f5</div>
+          </div>
+          <div class="btn-row">
+            ${state.wrongList.length > 0 ? `<button class="primary-btn" id="retryBtn">\ud2c0\ub9b0 \ubb38\uc81c\ub9cc \ub2e4\uc2dc\ud480\uae30</button>` : `<button class="primary-btn" id="restartBtn">\ub2e4\uc2dc \uc2dc\uc791\ud558\uae30</button>`}
+          </div>
+          ${state.wrongList.length > 0 ? `<button class="secondary-btn" id="restartBtn2">\ucc98\uc74c\ubd80\ud130 \ub2e4\uc2dc \uc124\uc815\ud558\uae30</button>` : ''}
+        </div>
+        <div class="result-col">
+          <div class="section-label" style="margin-top:0;">\ud2c0\ub9b0 \ubb38\uc81c \ub2e4\uc2dc\ubcf4\uae30 (${state.wrongList.length})</div>
+          <div class="review-list">${reviewHtml}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderBulkReview() {
+  const { items, index } = state.bulkReview;
+  const total = items.length;
+  const cur = items[index];
+  const transientMsg = transientCustomHint;
+  transientCustomHint = null;
+  const hintHtml = transientMsg ? `<p class="fav-io-hint">${transientMsg}</p>` : '';
+
+  return `
+    <div class="manage-top">
+      <div class="manage-header">
+        <h2>붙여넣기 검토 (${index + 1} / ${total})</h2>
+        <button class="manage-close-btn" id="bulkCancelBtn">✕</button>
+      </div>
+    </div>
+    <div class="manage-body">
+      <div class="section-label" style="margin:0 0 10px;">카테고리: <b style="color:var(--ink);">${cur.category}</b></div>
+      <div class="custom-add-row">
+        <input id="bulkWordIn" value="${cur.word}" placeholder="영단어">
+        <input id="bulkMeaningIn" value="${cur.meaning}" placeholder="뜻">
+      </div>
+      <div class="manage-edit-row-btns" style="margin-top:10px;">
+        <button class="cancel-btn" id="bulkPrevBtn" ${index === 0 ? 'disabled' : ''}>← 이전</button>
+        <button class="cancel-btn" id="bulkNextBtn" ${index === total - 1 ? 'disabled' : ''}>다음 →</button>
+        <button style="color:var(--bad);background:var(--bad-soft);" id="bulkDeleteBtn">이 단어 삭제</button>
+      </div>
+      ${hintHtml}
+      <button class="save-btn" style="width:100%;margin-top:18px;padding:12px;border-radius:12px;border:none;font-weight:700;" id="bulkFinishBtn">전체 등록하기 (${total}개)</button>
+    </div>
+  `;
+}
+
+function renderManage() {
+  if (state.bulkReview) return renderBulkReview();
+  const cat = state.manageCategory;
+  const words = cat ? (bySet[cat] || []) : [];
+  const transientMsg = transientCustomHint;
+  transientCustomHint = null;
+
+  const catChips = setOrder.map(name => `
+    <div class="manage-cat-row ${name === cat ? 'active' : ''}" data-cat="${name}">
+      <button class="manage-cat-main" data-cat="${name}">
+        <span class="manage-cat-name">${name}</span>
+        <span class="manage-cat-count">${(bySet[name] || []).length}\uac1c</span>
+      </button>
+      <button class="manage-cat-handle" data-cat="${name}" aria-label="\uc21c\uc11c \ubcc0\uacbd">\u2630</button>
+    </div>
+  `).join('');
+
+  const wordRows = words.map(w => {
+    if (state.manageEditId === w.id) {
+      return `
+        <div class="manage-edit-row">
+          <div class="custom-add-row">
+            <input id="editWordIn" value="${w.word}" placeholder="\uc601\ub2e8\uc5b4">
+            <input id="editMeaningIn" value="${w.opts[w.ans - 1]}" placeholder="\ub73b">
+          </div>
+          <div class="manage-edit-row-btns">
+            <button class="cancel-btn" data-cancel-edit="1">\ucde8\uc18c</button>
+            <button class="save-btn" data-save-edit="${w.id}">\uc800\uc7a5</button>
+          </div>
+        </div>
+      `;
+    }
+    return `
+      <div class="manage-word-row">
+        <div class="manage-word-main">
+          <b>${w.word}</b>
+          <span>${w.opts[w.ans - 1]}</span>
+        </div>
+        <div class="manage-word-actions">
+          <button class="edit-btn" data-edit-id="${w.id}">\u270e</button>
+          <button class="del-btn" data-del-id="${w.id}">\u2715</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const addFormHtml = state.showManageAddForm ? `
+    <div class="manage-edit-row">
+      <div class="custom-add-row">
+        <input id="manageWordIn" placeholder="\uc601\ub2e8\uc5b4">
+        <input id="manageMeaningIn" placeholder="\ub73b">
+      </div>
+      <div class="manage-edit-row-btns">
+        <button class="cancel-btn" data-cancel-add="1">\ucde8\uc18c</button>
+        <button class="save-btn" id="manageAddSaveBtn">\ucd94\uac00</button>
+      </div>
+    </div>
+  ` : '';
+
+  const addCategoryFormHtml = state.showAddCategoryForm ? `
+    <div class="custom-add-row" style="margin-bottom:14px;">
+      <input id="newCategoryIn" placeholder="\uc0c8 \uce74\ud14c\uace0\ub9ac \uc774\ub984">
+      <button id="saveNewCategoryBtn">\ucd94\uac00</button>
+    </div>
+  ` : '';
+
+  const renameCategoryFormHtml = state.showRenameCategoryForm && cat ? `
+    <div class="custom-add-row" style="margin-bottom:14px;">
+      <input id="renameCategoryIn" placeholder="\uc0c8 \uc774\ub984" value="${cat}">
+      <button id="saveRenameCategoryBtn">\ubcc0\uacbd</button>
+    </div>
+  ` : '';
+
+  const bulkPasteFormHtml = state.showBulkPasteForm ? `
+    <div class="manage-edit-row" style="margin-bottom:14px;">
+      <textarea id="bulkPasteIn" rows="8" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box;" placeholder="Day 1
+
+milk 우유
+cookie 쿠키
+
+
+Day 1 파생어
+
+pen 펜
+pencil 연필"></textarea>
+      <div class="manage-edit-row-btns" style="margin-top:8px;">
+        <button class="cancel-btn" id="bulkCancelPasteBtn">취소</button>
+        <button class="save-btn" id="bulkParseBtn">분석하기</button>
+      </div>
+    </div>
+  ` : '';
+
+  const hintHtml = transientMsg ? `<p class="fav-io-hint">${transientMsg}</p>` : '';
+
+  return `
+    <div class="manage-top">
+      <div class="manage-header">
+        <h2>\ub2e8\uc5b4\uc7a5 \uad00\ub9ac</h2>
+        <button class="manage-close-btn" id="closeManageBtn">\u2715</button>
+      </div>
+      <div class="manage-cat-list">
+        ${catChips}
+      </div>
+      <button class="allbtn manage-cat-add-btn" id="showAddCategoryBtn" style="margin:0 16px 10px;width:calc(100% - 32px);">+ \uce74\ud14c\uace0\ub9ac \ucd94\uac00</button>
+      <button class="allbtn manage-cat-add-btn" id="showBulkPasteBtn" style="margin:0 16px 14px;width:calc(100% - 32px);">📋 붙여넣기로 일괄 등록</button>
+      <button class="allbtn manage-cat-add-btn" id="downloadWordsJsBtn" style="margin:0 16px 14px;width:calc(100% - 32px);">💾 words.js 파일 다운로드</button>
+    </div>
+    <div class="manage-body">
+      ${bulkPasteFormHtml}
+      ${addCategoryFormHtml}
+      ${!cat ? hintHtml + '<div class="manage-empty">\uce74\ud14c\uace0\ub9ac\ub97c \uba3c\uc800 \uc120\ud0dd\ud558\uac70\ub098 \ub9cc\ub4e4\uc5b4\uc8fc\uc138\uc694.</div>' : `
+        <div class="manage-cat-tools">
+          <button id="showRenameCategoryBtn">\u270e \uc774\ub984 \ubcc0\uacbd</button>
+          <button class="danger" id="deleteCategoryBtn">\uce74\ud14c\uace0\ub9ac \uc0ad\uc81c</button>
+        </div>
+        ${renameCategoryFormHtml}
+        ${hintHtml}
+        ${words.length === 0 && !state.showManageAddForm ? '<div class="manage-empty">\uc544\uc9c1 \ub2e8\uc5b4\uac00 \uc5c6\uc5b4\uc694.</div>' : wordRows}
+        ${addFormHtml}
+        ${!state.showManageAddForm ? `<button class="allbtn" id="showManageAddBtn">+ \ub2e8\uc5b4 \ucd94\uac00</button>` : ''}
+      `}
+
+      <div class="fav-io" style="margin-top:20px;">
+        <div class="section-label" style="margin:0 0 6px;">\ud83d\udcbe \uc218\uc815 \ub0b4\uc6a9 \uc800\uc7a5 / \ubd88\ub7ec\uc624\uae30</div>
+        <div class="fav-io-row">
+          <input readonly id="customCodeOut" value="${exportCustomCode()}" placeholder="\uc218\uc815\ub41c \ub0b4\uc6a9\uc774 \uc5c6\uc5b4\uc694">
+          <button id="copyCustomCodeBtn" ${exportCustomCode() === '' ? 'disabled' : ''}>\ubcf5\uc0ac</button>
+        </div>
+        <div class="fav-io-row">
+          <input id="customCodeIn" placeholder="\ucf54\ub4dc \ubd99\uc5ec\ub123\uae30">
+          <button id="importCustomCodeBtn">\ubd88\ub7ec\uc624\uae30</button>
+        </div>
+        <p class="fav-io-hint" id="customHint">\ub2e8\uc5b4/\uce74\ud14c\uace0\ub9ac \uc218\uc815 \ub0b4\uc6a9\uc744 \ucf54\ub4dc\ub85c \ubc31\uc5c5\ud574\ub458 \uc218 \uc788\uc5b4\uc694.</p>
+      </div>
+    </div>
+  `;
+}
+
+function setupCategoryDrag() {
+  const container = document.querySelector('.manage-cat-list');
+  if (!container) return;
+
+  container.querySelectorAll('.manage-cat-main').forEach(btn => {
+    btn.addEventListener('click', () => setManageCategory(btn.dataset.cat));
+  });
+
+  container.querySelectorAll('.manage-cat-handle').forEach(handle => {
+    handle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      const row = handle.closest('.manage-cat-row');
+      if (!row) return;
+      row.classList.add('dragging');
+      try { handle.setPointerCapture(e.pointerId); } catch (err) { /* noop */ }
+
+      const onMove = (ev) => {
+        ev.preventDefault();
+        const y = ev.clientY;
+        const siblings = Array.from(container.querySelectorAll('.manage-cat-row')).filter(r => r !== row);
+        for (const sib of siblings) {
+          const rect = sib.getBoundingClientRect();
+          const mid = rect.top + rect.height / 2;
+          const rowIsBefore = !!(row.compareDocumentPosition(sib) & Node.DOCUMENT_POSITION_FOLLOWING);
+          if (y < mid && !rowIsBefore) {
+            container.insertBefore(row, sib);
+            break;
+          } else if (y > mid && rowIsBefore) {
+            container.insertBefore(row, sib.nextSibling);
+            break;
+          }
+        }
+      };
+
+      const onUp = () => {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
+        row.classList.remove('dragging');
+        const newOrder = Array.from(container.querySelectorAll('.manage-cat-row')).map(r => r.dataset.cat);
+        categoryOrder = newOrder;
+        rebuildDerivedData();
+        saveEditState();
+        render();
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
+    });
+  });
+}
+
+function bindManageEvents() {
+  const closeBtn = document.getElementById('closeManageBtn');
+  if (closeBtn) closeBtn.addEventListener('click', closeManage);
+
+  setupCategoryDrag();
+
+  const showBulkPasteBtn = document.getElementById('showBulkPasteBtn');
+  if (showBulkPasteBtn) showBulkPasteBtn.addEventListener('click', () => {
+    state.showBulkPasteForm = true;
+    render();
+  });
+  const bulkCancelPasteBtn = document.getElementById('bulkCancelPasteBtn');
+  if (bulkCancelPasteBtn) bulkCancelPasteBtn.addEventListener('click', () => {
+    state.showBulkPasteForm = false;
+    render();
+  });
+  const bulkParseBtn = document.getElementById('bulkParseBtn');
+  if (bulkParseBtn) bulkParseBtn.addEventListener('click', () => {
+    const input = document.getElementById('bulkPasteIn');
+    const items = parseBulkWordPaste(input.value);
+    if (items.length === 0) {
+      transientCustomHint = '붙여넣은 내용에서 단어를 찾지 못했어요. 형식을 확인해주세요.';
+      render();
+      return;
+    }
+    state.bulkReview = { items, index: 0 };
+    state.showBulkPasteForm = false;
+    render();
+  });
+
+  // bulk review navigation
+  const syncBulkInputs = () => {
+    if (!state.bulkReview) return;
+    const wordIn = document.getElementById('bulkWordIn');
+    const meaningIn = document.getElementById('bulkMeaningIn');
+    if (wordIn && meaningIn) {
+      state.bulkReview.items[state.bulkReview.index].word = wordIn.value;
+      state.bulkReview.items[state.bulkReview.index].meaning = meaningIn.value;
+    }
+  };
+  const bulkPrevBtn = document.getElementById('bulkPrevBtn');
+  if (bulkPrevBtn) bulkPrevBtn.addEventListener('click', () => {
+    syncBulkInputs();
+    state.bulkReview.index = Math.max(0, state.bulkReview.index - 1);
+    render();
+  });
+  const bulkNextBtn = document.getElementById('bulkNextBtn');
+  if (bulkNextBtn) bulkNextBtn.addEventListener('click', () => {
+    syncBulkInputs();
+    state.bulkReview.index = Math.min(state.bulkReview.items.length - 1, state.bulkReview.index + 1);
+    render();
+  });
+  const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+  if (bulkDeleteBtn) bulkDeleteBtn.addEventListener('click', () => {
+    const br = state.bulkReview;
+    br.items.splice(br.index, 1);
+    if (br.items.length === 0) {
+      state.bulkReview = null;
+      transientCustomHint = '모든 항목이 삭제되어 취소되었어요.';
+    } else {
+      br.index = Math.min(br.index, br.items.length - 1);
+    }
+    render();
+  });
+  const bulkCancelBtn = document.getElementById('bulkCancelBtn');
+  if (bulkCancelBtn) bulkCancelBtn.addEventListener('click', () => {
+    state.bulkReview = null;
+    render();
+  });
+  const bulkFinishBtn = document.getElementById('bulkFinishBtn');
+  if (bulkFinishBtn) bulkFinishBtn.addEventListener('click', () => {
+    syncBulkInputs();
+    const items = state.bulkReview.items;
+    const firstCategory = items[0] ? (items[0].category || '').trim() : null;
+    const result = addBulkCustomWords(items);
+    state.bulkReview = null;
+    if (firstCategory && setOrder.includes(firstCategory)) state.manageCategory = firstCategory;
+    let msg = `${items.length}개 중 ${result.added}개 등록 완료`;
+    if (result.skippedDup.length) msg += `, 중복 ${result.skippedDup.length}개 제외`;
+    if (result.skippedEmpty.length) msg += `, 빈 항목 ${result.skippedEmpty.length}개 제외`;
+    if (result.lowOptions) msg += `. 보기가 4개 미만인 단어가 ${result.lowOptions}개 있어요(단어가 더 쌓이면 자동 개선돼요).`;
+    transientCustomHint = msg;
+    render();
+  });
+
+  const showAddCategoryBtn = document.getElementById('showAddCategoryBtn');
+  if (showAddCategoryBtn) showAddCategoryBtn.addEventListener('click', () => {
+    state.showAddCategoryForm = !state.showAddCategoryForm;
+    render();
+  });
+  const saveNewCategoryBtn = document.getElementById('saveNewCategoryBtn');
+  if (saveNewCategoryBtn) saveNewCategoryBtn.addEventListener('click', () => {
+    const input = document.getElementById('newCategoryIn');
+    const result = addCategory(input.value);
+    if (result.ok) {
+      state.manageCategory = input.value.trim();
+      state.showAddCategoryForm = false;
+    }
+    transientCustomHint = result.msg;
+    render();
+  });
+
+  const showRenameCategoryBtn = document.getElementById('showRenameCategoryBtn');
+  if (showRenameCategoryBtn) showRenameCategoryBtn.addEventListener('click', () => {
+    state.showRenameCategoryForm = !state.showRenameCategoryForm;
+    render();
+  });
+  const saveRenameCategoryBtn = document.getElementById('saveRenameCategoryBtn');
+  if (saveRenameCategoryBtn) saveRenameCategoryBtn.addEventListener('click', () => {
+    const input = document.getElementById('renameCategoryIn');
+    const result = renameCategory(state.manageCategory, input.value);
+    if (result.ok) {
+      state.manageCategory = input.value.trim();
+      state.showRenameCategoryForm = false;
+    }
+    transientCustomHint = result.msg;
+    render();
+  });
+
+  const deleteCategoryBtn = document.getElementById('deleteCategoryBtn');
+  if (deleteCategoryBtn) deleteCategoryBtn.addEventListener('click', () => {
+    if (!confirm(`"${state.manageCategory}" \uce74\ud14c\uace0\ub9ac\uc640 \uadf8 \uc548\uc758 \ub2e8\uc5b4\ub97c \ubaa8\ub450 \uc0ad\uc81c\ud560\uae4c\uc694?`)) return;
+    deleteCategory(state.manageCategory);
+    state.manageCategory = setOrder[0] || null;
+    render();
+  });
+
+  const downloadWordsJsBtn = document.getElementById('downloadWordsJsBtn');
+  if (downloadWordsJsBtn) downloadWordsJsBtn.addEventListener('click', () => {
+    downloadWordsJsFile();
+    transientCustomHint = '\ub2e4\uc6b4\ub85c\ub4dc\ub41c words.js \ub85c \uae30\uc874 \ud30c\uc77c\uc744 \uad50\uccb4\ud574\uc8fc\uc138\uc694!';
+    render();
+  });
+
+  const showManageAddBtn = document.getElementById('showManageAddBtn');
+  if (showManageAddBtn) showManageAddBtn.addEventListener('click', () => {
+    state.showManageAddForm = true;
+    render();
+  });
+  document.querySelectorAll('[data-cancel-add]').forEach(el => {
+    el.addEventListener('click', () => { state.showManageAddForm = false; render(); });
+  });
+  const manageAddSaveBtn = document.getElementById('manageAddSaveBtn');
+  if (manageAddSaveBtn) manageAddSaveBtn.addEventListener('click', () => {
+    const wordIn = document.getElementById('manageWordIn');
+    const meaningIn = document.getElementById('manageMeaningIn');
+    const result = addCustomWord(wordIn.value, meaningIn.value, state.manageCategory);
+    if (result.ok) state.showManageAddForm = false;
+    transientCustomHint = result.msg;
+    render();
+  });
+
+  document.querySelectorAll('[data-edit-id]').forEach(el => {
+    el.addEventListener('click', () => {
+      state.manageEditId = el.dataset.editId;
+      render();
+    });
+  });
+  document.querySelectorAll('[data-cancel-edit]').forEach(el => {
+    el.addEventListener('click', () => { state.manageEditId = null; render(); });
+  });
+  document.querySelectorAll('[data-save-edit]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.saveEdit;
+      const wordIn = document.getElementById('editWordIn');
+      const meaningIn = document.getElementById('editMeaningIn');
+      const result = editWord(id, wordIn.value, meaningIn.value);
+      if (result.ok) state.manageEditId = null;
+      transientCustomHint = result.msg;
+      render();
+    });
+  });
+  document.querySelectorAll('[data-del-id]').forEach(el => {
+    el.addEventListener('click', () => {
+      if (!confirm('\uc774 \ub2e8\uc5b4\ub97c \uc0ad\uc81c\ud560\uae4c\uc694?')) return;
+      deleteWord(el.dataset.delId);
+      render();
+    });
+  });
+
+  const copyCustomBtn = document.getElementById('copyCustomCodeBtn');
+  if (copyCustomBtn) copyCustomBtn.addEventListener('click', () => {
+    const out = document.getElementById('customCodeOut');
+    const hint = document.getElementById('customHint');
+    out.select();
+    out.setSelectionRange(0, 99999);
+    let copied = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(out.value);
+        copied = true;
+      }
+    } catch (e) { /* clipboard API blocked */ }
+    if (!copied) {
+      try { copied = document.execCommand('copy'); } catch (e) { /* still blocked */ }
+    }
+    if (hint) hint.textContent = copied
+      ? '\uc548\uc774 \ubcf5\uc0ac\ub418\uc5c8\uc5b4\uc694! \uc548\uc804\ud55c \uacf3\uc5d0 \ubd99\uc5ec\ub123\uc5b4\ub450\uc138\uc694.'
+      : '\uc790\ub3d9 \ubcf5\uc0ac\uac00 \uc548 \ub418\uba74 \uc704 \ucf54\ub4dc\ub97c \uc9c1\uc811 \uc120\ud0dd\ud574\uc11c \ubcf5\uc0ac\ud574\uc8fc\uc138\uc694.';
+  });
+  const importCustomBtn = document.getElementById('importCustomCodeBtn');
+  if (importCustomBtn) importCustomBtn.addEventListener('click', () => {
+    const input = document.getElementById('customCodeIn');
+    const result = importCustomCode(input.value);
+    transientCustomHint = result.msg;
+    render();
+  });
+}
+
+function render() {
+  const app = document.getElementById('app');
+  if (state.screen === 'setup') {
+    app.innerHTML = renderSetup();
+    document.querySelectorAll('.chip').forEach(el => {
+      el.addEventListener('click', () => toggleSet(el.dataset.set));
+    });
+    document.getElementById('allBtn').addEventListener('click', selectAllSets);
+    const rangePrevBtn = document.getElementById('rangePrevBtn');
+    if (rangePrevBtn) rangePrevBtn.addEventListener('click', () => {
+      state.rangePage = Math.max(0, state.rangePage - 1);
+      render();
+    });
+    const rangeNextBtn = document.getElementById('rangeNextBtn');
+    if (rangeNextBtn) rangeNextBtn.addEventListener('click', () => {
+      state.rangePage = state.rangePage + 1;
+      render();
+    });
+    document.getElementById('modeToggleBtn').addEventListener('click', toggleQuizMode);
+    document.getElementById('minusBtn').addEventListener('click', () => changeCount(-5));
+    document.getElementById('plusBtn').addEventListener('click', () => changeCount(5));
+    const countInput = document.getElementById('countInput');
+    if (countInput) {
+      countInput.addEventListener('change', () => commitCountInput(countInput.value));
+      countInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); countInput.blur(); }
+      });
+    }
+    document.getElementById('startBtn').addEventListener('click', startQuiz);
+    const favBtn = document.getElementById('favQuizBtn');
+    if (favBtn) favBtn.addEventListener('click', startFavoriteQuiz);
+
+    const copyBtn = document.getElementById('copyCodeBtn');
+    if (copyBtn) copyBtn.addEventListener('click', () => {
+      const out = document.getElementById('favCodeOut');
+      const hint = document.getElementById('favIoHint');
+      out.select();
+      out.setSelectionRange(0, 99999);
+      let copied = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(out.value);
+          copied = true;
+        }
+      } catch (e) { /* clipboard API blocked - fall through to manual select */ }
+      if (!copied) {
+        try { copied = document.execCommand('copy'); } catch (e) { /* still blocked */ }
+      }
+      if (hint) hint.textContent = copied
+        ? '\uc548\uc774 \ubcf5\uc0ac\ub418\uc5c8\uc5b4\uc694! \uc548\uc804\ud55c \uacf3\uc5d0 \ubd99\uc5ec\ub123\uc5b4\ub450\uc138\uc694.'
+        : '\uc790\ub3d9 \ubcf5\uc0ac\uac00 \uc548 \ub418\uba74 \uc704 \ucf54\ub4dc\ub97c \uc9c1\uc811 \uc120\ud0dd\ud574\uc11c \ubcf5\uc0ac\ud574\uc8fc\uc138\uc694.';
+    });
+
+    const importBtn = document.getElementById('importCodeBtn');
+    if (importBtn) importBtn.addEventListener('click', () => {
+      const input = document.getElementById('favCodeIn');
+      const result = importFavCode(input.value);
+      transientHint = result.msg;
+      render();
+    });
+
+    const openManageBtn = document.getElementById('openManageBtn');
+    if (openManageBtn) openManageBtn.addEventListener('click', () => {
+      state.screen = 'manage';
+      if (!state.manageCategory || !setOrder.includes(state.manageCategory)) {
+        state.manageCategory = setOrder[0] || null;
+      }
+      render();
+      window.scrollTo(0, 0);
+      const appEl = document.getElementById('app');
+      if (appEl) appEl.scrollTop = 0;
+    });
+  } else if (state.screen === 'manage') {
+    app.innerHTML = renderManage();
+    bindManageEvents();
+  } else if (state.screen === 'quiz') {
+    app.innerHTML = renderQuiz();
+    document.querySelectorAll('.opt').forEach(el => {
+      el.addEventListener('click', () => selectOption(parseInt(el.dataset.i)));
+    });
+    const nb = document.getElementById('nextBtn');
+    if (nb) nb.addEventListener('click', nextQuestion);
+    const pb = document.getElementById('prevBtn');
+    if (pb) pb.addEventListener('click', prevQuestion);
+    const favToggle = document.getElementById('favToggle');
+    if (favToggle) favToggle.addEventListener('click', () => toggleFav(state.queue[state.idx]));
+    const quizHomeBtn = document.getElementById('quizHomeBtn');
+    if (quizHomeBtn) quizHomeBtn.addEventListener('click', () => {
+      if (confirm('\ud478\uc988\ub97c \uc885\ub8cc\ud558\uace0 \ud648\uc73c\ub85c \ub3cc\uc544\uac08\uae4c\uc694? \uc9c4\ud589 \uc0c1\ud669\uc740 \uc800\uc7a5\ub418\uc9c0 \uc54a\uc544\uc694.')) {
+        restart();
+      }
+    });
+  } else if (state.screen === 'result') {
+    app.innerHTML = renderResult();
+    const retryBtn = document.getElementById('retryBtn');
+    if (retryBtn) retryBtn.addEventListener('click', retryWrong);
+    const restartBtn = document.getElementById('restartBtn');
+    if (restartBtn) restartBtn.addEventListener('click', restart);
+    const restartBtn2 = document.getElementById('restartBtn2');
+    if (restartBtn2) restartBtn2.addEventListener('click', restart);
+    document.querySelectorAll('[data-review-i]').forEach(el => {
+      el.addEventListener('click', () => toggleFav(state.wrongList[parseInt(el.dataset.reviewI)]));
+    });
+  }
+}
+
+render();
+</script>
+</body>
+</html>
