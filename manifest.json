@@ -1,9 +1,0 @@
-{
-  "name":"Anyoung Voca",
-  "short_name":"Voca",
-  "start_url":"./",
-  "display":"standalone",
-  "background_color":"#f4f5f7",
-  "theme_color":"#4f46e5",
-  "icons":[{"src":"app-icon.png","sizes":"512x512","type":"image/png"}]
-}
